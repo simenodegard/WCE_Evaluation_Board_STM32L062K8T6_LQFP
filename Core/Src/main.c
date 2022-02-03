@@ -44,6 +44,8 @@ SPI_HandleTypeDef hspi1;
 DMA_HandleTypeDef hdma_spi1_rx;
 DMA_HandleTypeDef hdma_spi1_tx;
 
+TIM_HandleTypeDef htim2;
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -53,13 +55,14 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 static void Toggle_GPIO_pin_Init(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+uint8_t ui8TimPulse = 75; // set duty cycle [%]
 /* USER CODE END 0 */
 
 /**
@@ -83,6 +86,14 @@ int main(void)
 	test_pattern[3] = 0b10010010;
 	test_pattern[4] = 0b00000101;
 	test_pattern[5] = 0b00101000;
+
+	uint8_t on_time = 0;
+	uint8_t off_time = 0;
+	double period = 50; //ms
+
+	double duty = 100;
+
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -105,12 +116,19 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_SPI1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
-  //---- TURN ON CAMERA LEDs ----
-  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+  on_time = period * (duty/100);
+  off_time = period * (1-(duty/100));
 
-  //---- ACTIVATION CLOCK PULSE -----
+//  HAL_TIM_Base_Start_IT(&htim2);
+//  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
+
+  //---- TURN ON CAMERA LEDs ----
+ // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+
+ // ---- ACTIVATION CLOCK PULSE -----
     HAL_SPI_DeInit(&hspi1);
     Toggle_GPIO_pin_Init();
     GPIOA -> ODR ^= GPIO_PIN_5;
@@ -133,7 +151,7 @@ int main(void)
   	  HAL_Delay(1);
       }
 
-    //---- 12 CLOCKS -----  IS this to slow?
+    //---- 12 CLOCKS -----
     for (uint8_t i = 0; i < 24; i++)
       {
   	  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
@@ -143,50 +161,50 @@ int main(void)
     //---- INITIAL PRE-SYNC MODE: RECEIVE 492 PP FROM CAMERA -----
     MX_DMA_Init();
     MX_SPI1_Init();
-    HAL_SPI_Receive_DMA(&hspi1, received_data, 492);
+    HAL_SPI_Receive(&hspi1, received_data, 492, 100);
 
     //---- SYNC MODE -----
-    HAL_SPI_Receive_DMA(&hspi1, received_data, 984);
+    HAL_SPI_Receive(&hspi1, received_data, 984, 100);
 
     //---- DELAY MODE -----
-    HAL_SPI_Receive_DMA(&hspi1, received_data, 984);
+    HAL_SPI_Receive(&hspi1, received_data, 984, 100);
 
     //---- READOUT MODE -----
-    HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 1
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 2
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 3
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 4
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 5
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 6
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 7
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 8
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 9
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 10
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 11
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 12
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 13
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 14
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 15
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 16
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 17
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 18
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 19
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 20
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 21
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 22
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 23
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 24
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 25
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 26
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 27
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 28
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 29
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 30
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 31
-	HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 32
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 1
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 2
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 3
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 4
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 5
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 6
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 7
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 8
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 9
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 10
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 11
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 12
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 13
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 14
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 15
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 16
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 17
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 18
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 19
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 20
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 21
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 22
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 23
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 24
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 25
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 26
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 27
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 28
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 29
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 30
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 31
+    HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 32
 
     //---- END OF FRAME -----
-    HAL_SPI_Receive_DMA(&hspi1, received_data, 8);
+    HAL_SPI_Receive(&hspi1, received_data, 8, 100);
 
   /* USER CODE END 2 */
 
@@ -194,6 +212,27 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  /*LED brightness control*/
+//	  GPIOA->BSRR =(1<<2);
+//	  HAL_Delay(on_time);
+//	  GPIOA->BSRR =(1<<18);
+//	  HAL_Delay(off_time);
+
+//	  //---- TURN ON CAMERA LEDs ----
+//	  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+//	  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+//	  GPIOA->BSRR =(1<<3);
+//	  HAL_Delay(on_time);
+//	  GPIOA->BSRR =(1<<19);
+//	  HAL_Delay(off_time);
+//	  ---- TURN ON EXTRA LEDs ----
+//	  HAL_GPIO_WritePin(LED_EN_GPIO_Port, LED_EN_Pin, GPIO_PIN_SET);
+//	  HAL_Delay(100);
+//	  HAL_GPIO_WritePin(LED_EN_GPIO_Port, LED_EN_Pin, GPIO_PIN_RESET);
+//	  HAL_Delay(100);
+
+
+
 	  //---- REGISTER CONFIGURATION - 48-bit (4PP) -----
 	  HAL_SPI_Transmit(&hspi1, test_pattern, 6, 1000);
 
@@ -201,44 +240,44 @@ int main(void)
 	  HAL_SPI_Transmit(&hspi1, empty_data, 966, 1000);
 
 	  //---- SYNC and DELAY MODE -----
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 1968);
+	  HAL_SPI_Receive(&hspi1, received_data, 1968, 100);
 
 	  //---- READOUT MODE -----
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 1
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 2
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 3
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 4
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 5
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 6
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 7
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 8
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 9
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 10
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 11
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 12
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 13
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 14
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 15
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 16
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 17
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 18
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 19
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 20
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 21
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 22
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 23
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 24
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 25
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 26
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 27
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 28
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 29
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 30
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 31
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 4920); // 32
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 1
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 2
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 3
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 4
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 5
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 6
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 7
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 8
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 9
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 10
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 11
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 12
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 13
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 14
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 15
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 16
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 17
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 18
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 19
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 20
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 21
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 22
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 23
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 24
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 25
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 26
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 27
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 28
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 29
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 30
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 31
+	  HAL_SPI_Receive(&hspi1, received_data, 4920, 100); // 32
 
 	  //---- END OF FRAME -----
-	  HAL_SPI_Receive_DMA(&hspi1, received_data, 12);
+	  HAL_SPI_Receive(&hspi1, received_data, 12, 100);
 
     /* USER CODE END WHILE */
 
@@ -268,7 +307,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLLMUL_3;
-  RCC_OscInitStruct.PLL.PLLDIV = RCC_PLLDIV_2;
+  RCC_OscInitStruct.PLL.PLLDIV = RCC_PLLDIV_3;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -280,9 +319,9 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV4;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
   {
     Error_Handler();
   }
@@ -323,6 +362,51 @@ static void MX_SPI1_Init(void)
   /* USER CODE BEGIN SPI1_Init 2 */
 
   /* USER CODE END SPI1_Init 2 */
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 4;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 100;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
 
 }
 
